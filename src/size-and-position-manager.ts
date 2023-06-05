@@ -65,6 +65,7 @@ export class SizeAndPosManager {
     if (index > this.lastMeasuredIndex) {
       const lastMeasuredSizeAndPosition = this.getSizeAndPositionOfLastMeasuredItem();
       let offset = lastMeasuredSizeAndPosition.offset + lastMeasuredSizeAndPosition.size;
+      // console.log('offset',index,offset)
 
       for (let i = this.lastMeasuredIndex + 1; i <= index; i++) {
         const size = this.itemSizeGetter(i);
@@ -163,7 +164,9 @@ export class SizeAndPosManager {
     overscanCount: number;
   }): { start?: number; stop?: number } {
     const totalSize = this.getTotalSize();
-
+    // console.log('getVisibleRange',containerSize,
+    //   offset,
+    //   overscanCount,totalSize)
     if (totalSize === 0) {
       return {};
     }

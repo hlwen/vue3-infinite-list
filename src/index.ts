@@ -1,3 +1,3 @@
-import InfiniteList from "./index.vue";
+import InfiniteScrolling from "./index.vue";
 
-export default InfiniteList;
+export default InfiniteScrolling;

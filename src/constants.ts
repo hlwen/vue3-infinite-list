@@ -28,15 +28,15 @@ export const positionProp = {
 
 export const STYLE_WRAPPER: any = {
   overflow: "auto",
-  willChange: "transform",
-  WebkitOverflowScrolling: "touch",
+  // willChange: "transform",
+  // WebkitOverflowScrolling: "touch",
 };
 
 export const STYLE_INNER: any = {
-  position: "relative",
-  overflow: "hidden",
+  // position: "relative",
+  // overflow: "hidden",
   width: "100%",
-  minHeight: "100%",
+  // minHeight: "100%",
 };
 
 export const STYLE_ITEM: any = {

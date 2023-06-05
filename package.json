@@ -1,5 +1,5 @@
 {
-  "name": "vue3-infinite-list",
+  "name": "infinite-scrolling",
   "version": "0.2.5",
   "author": "tnfe",
   "license": "MIT",
@@ -10,11 +10,11 @@
     "vue3"
   ],
   "private": false,
-  "main": "dist/vue3-infinite-list.es.js",
+  "main": "dist/infinite-scrolling.es.js",
   "exports": {
     ".": {
-      "import": "./dist/vue3-infinite-list.es.js",
-      "require": "./dist/vue3-infinite-list.umd.js"
+      "import": "./dist/infinite-scrolling.es.js",
+      "require": "./dist/infinite-scrolling.umd.js"
     }
   },
   "files": [
@@ -22,7 +22,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/tnfe/vue3-infinite-list"
+    "url": "https://github.com/tnfe/infinite-scrolling"
   },
   "scripts": {
     "dev": "vite",
@@ -33,7 +33,13 @@
     "ri": "npm run clean && pnpm i"
   },
   "dependencies": {
-    "vue-demi": "latest"
+    "@better-scroll/core": "^2.5.1",
+    "@better-scroll/pull-down": "^2.5.1",
+    "@better-scroll/pull-up": "^2.5.1",
+    "rollup-plugin-javascript-obfuscator": "^1.0.4",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-uglify": "^6.0.4",
+    "vite-plugin-compression": "^0.5.1"
   },
   "peerDependencies": {
     "@vue/composition-api": "1",
@@ -47,11 +53,12 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.2.4",
     "@vue/compiler-sfc": "^3.2.31",
-    "element-plus": "latest",
+    "element-plus": "^2.3.5",
     "sass": "latest",
     "typescript": "latest",
-    "vite": "latest",
-    "vue": "^3.2.31",
+    "vite": "^4.3.5",
+    "vite-plugin-css-injected-by-js": "^3.1.1",
+    "vue": "^3.3.4",
     "vue-router": "^4.0.14"
   }
 }
