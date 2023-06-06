@@ -49,7 +49,7 @@
 }
 </style>
 <template>
-  <div ref="rootNode" class="scroll-wrapper" :style="{ ...warpStyle }">
+  <div ref="rootNode" class="scroll-wrapper" :style="warpStyle">
 
     <div class="content">
       <div ref="innerNode" :style="innerStyle"></div>
@@ -731,12 +731,12 @@ export default {
       if (props.pullingDown) {
         // await props.pullingDown()
       }
-      let items = [];
-      let stop = props.data.length >= 10 ? 10 : props.data.length
-      for (let i = 0; i < stop; i++) {
-        items.push(props.data[i]);
-      }
-      event.items = items;
+      // let items = [];
+      // let stop = props.data.length >= 10 ? 10 : props.data.length
+      // for (let i = 0; i < stop; i++) {
+      //   items.push(props.data[i]);
+      // }
+      // event.items = items;
       nextTick(initAll);
     })
     onBeforeUnmount(() => {

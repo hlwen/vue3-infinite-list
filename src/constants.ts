@@ -27,7 +27,7 @@ export const positionProp = {
 };
 
 export const STYLE_WRAPPER: any = {
-  overflow: "auto",
+  overflow: "hidden",
   // willChange: "transform",
   // WebkitOverflowScrolling: "touch",
 };

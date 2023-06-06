@@ -41,7 +41,7 @@ export default defineComponent({
           setTimeout(()=>{
             data.list = CommonService.generateData(11)
             resolve()
-          },5000)
+          },1000)
           
         })
         
@@ -51,7 +51,7 @@ export default defineComponent({
           setTimeout(()=>{
             data.list = [...data.list, ...CommonService.generateData(10)]
             resolve()
-          },7000)
+          },1000)
           
         })
        
