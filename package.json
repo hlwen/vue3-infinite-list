@@ -10,10 +10,10 @@
     "vue3"
   ],
   "private": false,
-  "main": "dist/infinite-scrolling.es.js",
+  "main": "dist/infinite-scrolling.mjs",
   "exports": {
     ".": {
-      "import": "./dist/infinite-scrolling.es.js",
+      "import": "./dist/infinite-scrolling.mjs",
       "require": "./dist/infinite-scrolling.umd.js"
     }
   },

@@ -33,6 +33,7 @@ export default defineConfig({
       name,
       entry: "src/index.ts",
     },
+    sourcemap: true, // 输出.map文件
     rollupOptions: {
       external: ["vue"],
       plugins:[],

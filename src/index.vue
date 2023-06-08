@@ -54,7 +54,7 @@
     <div class="content">
       <div ref="innerNode" :style="innerStyle"></div>
 
-      <div v-for="(item, i) in event?.items" v-el-size="elSizes" :style="getItemStyle(i)" :key="event?.start + i"
+      <div @click.stop="()=>{$emit('click',{item,index: event.start + i})}" v-for="(item, i) in event?.items" v-el-size="elSizes" :style="getItemStyle(i)" :key="event?.start + i"
         class="vue3-infinite-list" :class="[itemClass]">
         <slot :event="event" :item="item" :index="event.start + i"></slot>
       </div>
@@ -447,14 +447,14 @@ export default {
       props.pullUp && _initPullUp()
       let y = 0
       let t = ''
-      let wait = 100
+      let wait = 150
       let previous = 0
       bs.on('scroll', (e) => {
         if (!state.pullDownBefore && !state.pullDownNow && e.y < 0) {
           state.pullDownBefore = true
         }
         // 限流
-        if (Math.abs(e.y - y) > 20 && !state.pullDownNow && !state.pullUpNow) {
+        if (Math.abs(e.y - y) > 10 && !state.pullDownNow && !state.pullUpNow) {
           console.log(111111)
           const now = +new Date(),
             remaining = wait - (now - previous)
@@ -464,6 +464,8 @@ export default {
               clearTimeout(t)
               t = ''
             }
+            
+            previous = +new Date();
             e.y < 0 && handleScroll(0 - e.y)
           }
           if (!t) {
@@ -729,7 +731,7 @@ export default {
     ////////////////////////////////////////////////////////////////////////////
     onMounted(async () => {
       if (props.pullingDown) {
-        // await props.pullingDown()
+        await props.pullingDown()
       }
       // let items = [];
       // let stop = props.data.length >= 10 ? 10 : props.data.length
@@ -754,6 +756,10 @@ export default {
     watch(
       () => props.data,
       (newVal, oldVal) => {
+        console.log('props.data',props.data)
+        if(!props.data.length){
+          event.items = []
+        }
         sizeAndPosManager?.updateConfig({
           itemCount: getItemCount(),
           estimatedItemSize: getEstimatedItemSize(),
