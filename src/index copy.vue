@@ -14,6 +14,9 @@
   &__pullup {
     width: 100%;
     height: 50px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -24,7 +27,7 @@
   &__pulldown {
     position: absolute;
     left: 0;
-    top: -60px;
+    top: -50px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -46,39 +49,19 @@
       align-items: center;
     }
   }
-  &__nodeta {
-    position: absolute;
-    left: 0;
-    top: 50px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all;
-    font-size: 14px;
-    z-index: 0;
-    color: rgb(153, 153, 153);
-    transition: opacity 1s;
-
-  }
 }
-
-
 </style>
 <template>
   <div ref="rootNode" class="scroll-wrapper" :style="warpStyle">
 
-    <div ref="contentNode" class="content">
-      <div ref="innerNode" :style="innerStyle"></div>
-      <div @click.stop="() => { $emit('click', { item, index: event.start + i }) }" :data-id="event.start + i" v-for="(item, i) in event?.items"
-        v-el-size="elSizes" :style="getItemStyle(i)" :key="event?.start + i" class="vue3-infinite-list"
-        :class="[itemClass]">
+    <div ref="contentNode" class="content" :style="innerStyle">
+      <!-- <div ref="innerNode" ></div> -->
+
+      <div @click.stop="$emit('click',{item,index:event.start + i})" v-for="(item, i) in event?.items" v-el-size="elSizes" :style="getItemStyle(i)" :key="event?.start + i"
+        class="vue3-infinite-list" :class="[itemClass]">
+        {{event?.start + i}}{{ elSizes[event?.start + i] }}
         <slot :event="event" :item="item" :index="event.start + i"></slot>
       </div>
-        <slot name="nodata" v-if="data.length <1 && !state.pullDownNow" >
-        <div :class="c('__nodeta')" :style="{opacity: 1-state.bubbleY/20}">暂无数据</div>
-      </slot>
-   
       <slot :pullDown="pullDown" :pullDownStyle="state.pullDownStyle" :pullDownBefore="state.pullDownBefore"
         :pullDownNow="state.pullDownNow" :bubbleY="state.bubbleY" name="pulldown">
         <div v-if="pullDown" ref="pulldown" :style="state.pullDownStyle" :class="c('__pulldown')">
@@ -94,7 +77,7 @@
         </div>
       </slot>
 
-      <div :style="endStyle"></div>
+      <!-- <div :style="endStyle"></div> -->
       <slot :pullUp="pullUp" :pullUpNow="state.pullUpNow" name="pullup">
         <div v-if="pullUp" :class="c('__pullup')">
           <div v-if="!state.pullUpNow">
@@ -114,6 +97,7 @@
 <script lang="ts">
 import mixin from './mixins'
 import {
+  defineComponent,
   watch,
   ref,
   reactive,
@@ -146,7 +130,7 @@ import {
 } from "./constants";
 
 import { ItemStyle, StyleCache, ItemInfo, RenderedRows } from "./infinite-list.interface";
-import { SizeAndPosManager, ItemSize } from "./size-and-position-manager";
+import { SizeAndPosManager, ItemSize,SizeAndPosition } from "./size-and-position-manager";
 import { Util } from "./utils";
 import { ILEvent } from "./il-event";
 import BScroll from '@better-scroll/core'
@@ -155,6 +139,7 @@ import PullDown from '@better-scroll/pull-down'
 import Loading from './Loading/index.vue'
 import Bubble from './Bubble/index.vue'
 import { timeout } from './utils'
+import { useResizeObserver } from '@vueuse/core'
 // 注册插件
 BScroll.use(Pullup)
 BScroll.use(PullDown)
@@ -206,7 +191,7 @@ export default {
       default: "px",
     },
     itemClass: {
-      type: [String, Array],
+      type: [String,Array],
       default: "",
     },
     width: {
@@ -313,41 +298,36 @@ export default {
           let clientRect = el.getBoundingClientRect()
           var computedStyle = getComputedStyle(el, null);
 
-
-          let height = clientRect.height + Number(computedStyle.marginTop.replace('px', '')) + Number(computedStyle.marginBottom.replace('px', ''));
-          let width = clientRect.width + Number(computedStyle.marginLeft.replace('px', '')) + Number(computedStyle.marginRight.replace('px', ''));
-
-          if(height && width){
-            binding.value[vnode.key].height =height
-          binding.value[vnode.key].width = width
-
-          }
-          // console.log(vnode.key, el.clientWidth,el.clientHeight)
+          binding.value[vnode.key].height = clientRect.height + Number(computedStyle.marginTop.replace('px',''))+ Number(computedStyle.marginBottom.replace('px',''));
+          binding.value[vnode.key].width = clientRect.width + Number(computedStyle.marginLeft.replace('px',''))+ Number(computedStyle.marginRight.replace('px',''));
+         
         };
         const objResizeObserver = new ResizeObserver(elResize);
         elResize();
         // 观察文本域元素
         objResizeObserver.observe(el);
-        const observer = new IntersectionObserver(
-          (entries) => {
-            if (!binding.value[vnode.key]) {
-              binding.value[vnode.key] = {}
-            }
-            let entrie = entries[0]
-            // console.log(vnode.key,entrie)
-            let top = entrie.intersectionRect.top - entrie.rootBounds.top
-            let bottom = entrie.rootBounds.bottom - entrie.intersectionRect.bottom
-            binding.value[vnode.key].offset = top;
-            binding.value[vnode.key].isIntersecting = top >= 0 && bottom <= entrie.rootBounds.height;
-            // console.log(vnode.key, binding.value[vnode.key].isIntersecting, top, bottom, entrie.rootBounds.height)
-          },
-          {
-            root: el.parentNode,
-            rootMargin: '0px',
-            threshold: [0, 1],
-          },
-        )
-        observer.observe(el)
+        // const observer = new IntersectionObserver(
+        //   (entries) => {
+        //     if (!binding.value[vnode.key]) {
+        //       binding.value[vnode.key] = {}
+        //     }
+        //     let entrie = entries[0]
+        //     console.log(vnode.key,entrie)
+        //     let top = entrie.intersectionRect.top - entrie.rootBounds.top
+        //     let bottom = entrie.rootBounds.bottom - entrie.intersectionRect.bottom
+        //     binding.value[vnode.key].offset = top;
+        //     binding.value[vnode.key].isIntersecting = top >= 0 && bottom <= entrie.rootBounds.height;
+
+            
+        //     // console.log(vnode.key, binding.value[vnode.key].isIntersecting, top, bottom, entrie.rootBounds.height)
+        //   },
+        //   {
+        //     root: el.parentNode,
+        //     rootMargin: '0px',
+        //     threshold: [0, 1],
+        //   },
+        // )
+        // observer.observe(el)
       },
       unmounted(el, binding, vnode, prevVnode) {
         // console.log('unmounted',vnode.key,binding.value[vnode.key])
@@ -358,11 +338,11 @@ export default {
   setup(props, { attrs, slots, emit }) {
     let rootNode = ref(null);
     let innerNode = ref(null);
-    // let warpStyle = ref(null);
     let contentNode = ref(null);
+    // let warpStyle = ref(null);
     let elSizes = reactive({});
     // 容器高度
-    let rootNodeSize = reactive({
+    let totalSize = reactive({
       height: 0,
       width: 0,
     });
@@ -372,6 +352,7 @@ export default {
       pullDownStyle: '', // 下拉样式
       pullUpNow: false, // 正在上拉
       pullUpFinally: false, // true表示到了上拉加载到了最底部
+      isRebounding: false, // 正在回弹
       bubbleY: 0, // 气泡y坐标
       pullDownInitTop: 0
     });
@@ -388,19 +369,17 @@ export default {
 
     const getItemStyle = (index: number): any => {
       index += event.start;
-      const style = styleCache[index];
-      if (style) return style;
-
-      // const { size, offset } = sizeAndPosManager.getSizeAndPositionForIndex(index);
+    
+      const { size, offset } = getSize(index);
       const debugStyle = props.debug ? { backgroundColor: util.randomColor() } : null;
-
-      return (styleCache[index] = {
-        // ...STYLE_ITEM,
+      
+      return {
+        ...STYLE_ITEM,
         ...debugStyle,
         // height: (Math.floor(Math.random() * 100) + 50) + 'px'
         // [getCurrSizeProp()]: addUnit(size),
-        // [positionProp[props.scrollDirection]]: addUnit(offset),
-      });
+        [positionProp[props.scrollDirection]]: addUnit(offset),
+      };
     };
     let bs = ''
     // 初始化上拉加载
@@ -408,15 +387,16 @@ export default {
       bs.on('pullingUp', async () => {
 
         state.pullUpNow = true
-        state.pullUpFinally = false
-       let pullUpFinally =  await props.pullingUp()
+        state.pullUpFinally = true
+        await props.pullingUp()
         bs.finishPullUp()
-        state.pullUpFinally = !!pullUpFinally
+
         state.pullUpNow = false
 
-        nextTick(() => {
-          bs.refresh()
-        })
+        state.pullUpFinally = false
+        // nextTick(() => {
+        //   bs.refresh()
+        // })
 
       })
     }
@@ -426,30 +406,32 @@ export default {
         state.pullDownBefore = false
         state.pullDownNow = true
         await props.pullingDown()
+        state.isRebounding = true
         state.pullDownNow = false
         await timeout(props.bounceTime)
+        state.isRebounding = false
         bs.finishPullDown()
-        state.pullUpFinally = false
-        nextTick(() => {
-          bs.refresh()
-        })
+
+        // nextTick(() => {
+        //   bs.refresh()
+        // })
       })
 
       bs.on('scroll', e => {
-        if (!state.pullDownBefore && !state.pullDownNow && e.y <= 0) {
-          state.pullDownBefore = true
-        }
         if (!props.pullDown || e.y < 0) return
-       
+
         const posY = Math.floor(e.y) // 滚动的y轴位置：Number
 
         if (state.pullDownBefore) {
           state.bubbleY = Math.max(0, posY + state.pullDownInitTop)
-          state.pullDownStyle = `transform: translateY(${Math.min(posY, 0-state.pullDownInitTop)}px)`
+          state.pullDownStyle = `transform: translateY(${Math.min(posY, -state.pullDownInitTop)}px)`
         } else {
           state.bubbleY = 0
         }
 
+        if (state.isRebounding) {
+          state.pullDownStyle = `transform: translateY(${Math.min(posY, props.pullDownConfig.stop)}px)`
+        }
       })
     }
     const initAll = () => {
@@ -477,22 +459,21 @@ export default {
       props.pullUp && _initPullUp()
       let y = 0
       let t = ''
-      let wait = 150
+      let wait = 300
       let previous = 0
       bs.on('scroll', (e) => {
-    
+        if (!state.pullDownBefore && !state.pullDownNow && e.y < 0) {
+          state.pullDownBefore = true
+        }
         // 限流
-        if (Math.abs(e.y - y) > 20 && !state.pullDownNow && !state.pullUpNow) {
-          // console.log(111111)
+        if (Math.abs(e.y - y) > 100 && !state.pullDownNow && !state.pullUpNow) {
           const now = +new Date(),
             remaining = wait - (now - previous)
-
           if (remaining <= 0) {
             if (t) {
               clearTimeout(t)
               t = ''
             }
-
             previous = +new Date();
             e.y < 0 && handleScroll(0 - e.y)
           }
@@ -530,12 +511,11 @@ export default {
       scrollRender();
     };
     let isShaking = false
-    const handleScroll = () => {
+    const handleScroll = (y) => {
       if (isShaking) {
         return
       }
-      // const nodeOffset = getNodeOffset();
-      // console.log('nodeOffset',nodeOffset,bs.y)
+      const nodeOffset = getNodeOffset();
       // if (nodeOffset < 0 || offset === nodeOffset || e.target !== rootNode.value) return;
 
       // offset = e //nodeOffset;
@@ -544,13 +524,17 @@ export default {
 
       scrollRender();
       isShaking = false
-      nextTick(() => {
-        bs.refresh()
-      })
+      // nextTick(() => {
+      //   bs.refresh()
+      // })
 
     };
-
+    let y = 0
     const scrollRender = () => {
+      let scrollY = bs.y -y
+      // console.log('scrollY',scrollY)
+      // console.log(Math.ceil(scrollY/averageSize),props.overscanCount)
+      y = bs.y
 
       // let visibleList = Object.keys(elSizes).filter(i => elSizes[i].isIntersecting).sort((a, b) => a - b)
       // // console.log(visibleList,visibleList[0])
@@ -572,8 +556,8 @@ export default {
         containerSize: getCurrSizeVal() || 0,
         offset: 0 - bs.y || 0,
         overscanCount: props.overscanCount,
+        scrollY: Math.ceil(scrollY/averageSize)
       });
-      // console.log(start, stop,getItemCount())
 
 
       // console.log('offset,start,stop',offset,start,stop)
@@ -608,48 +592,46 @@ export default {
       renderEnd();
     };
     let innerStyle = computed(() => {
-      if (!event?.start) {
-        return {}
-      }
-      let size = 0
-      for (let i = 0; i < event?.start; i++) {
+      // if (!event?.start) {
+      //   return {}
+      // }
+      let size = 60
+      for (let i = 0; i < props.data.length -1; i++) {
         size += elSizes[i] ? elSizes[i].height : averageSize
       }
+
       return {
         ...STYLE_INNER,
         [getCurrSizeProp()]: addUnit(size),
       };
     });
-    let endStyle = computed(() => {
-      if (!props.data.length) {
-        return {
-          ...STYLE_INNER,
-          [getCurrSizeProp() === 'height' ? 'minHeight' : 'minWidth']: addUnit(props.height)
-        }
-      }
-      let size = 0
-      for (let i = event?.stop + 1; i < props.data.length; i++) {
-        size += elSizes[i] ? elSizes[i].height : averageSize
-      }
-      return {
-        ...STYLE_INNER,
-        [getCurrSizeProp()]: addUnit(size),
-      };
-    });
+    // let endStyle = computed(() => {
+    //   if (!props.data.length) {
+    //     return {
+    //       ...STYLE_INNER,
+    //       [getCurrSizeProp() === 'height' ? 'minHeight' : 'minWidth']: addUnit(props.height)
+    //     }
+    //   }
+    //   let size = 0
+    //   for (let i = event?.stop + 1; i < props.data.length; i++) {
+    //     size += elSizes[i] ? elSizes[i].height : averageSize
+    //   }
+    //   return {
+    //     ...STYLE_INNER,
+    //     [getCurrSizeProp()]: addUnit(size),
+    //   };
+    // });
 
     const scrollTo = (value: number) => {
-      rootNode.value[getCurrScrollProp()] = value;
-      oldOffset = value;
+      // rootNode.value[getCurrScrollProp()] = value;
+      // oldOffset = value;
     };
     let averageSize = 0
     const renderEnd = () => {
-      if (oldOffset !== offset && scrollChangeReason === SCROLL_CHANGE_REQUESTED) {
-        scrollTo(offset);
-      }
-      function avg(array: number[]): number {//封装求平均值函数
-        if(!array.length){
-          return 0
-        }
+      // if (oldOffset !== offset && scrollChangeReason === SCROLL_CHANGE_REQUESTED) {
+      //   scrollTo(offset);
+      // }
+      function avg(array: number): number {//封装求平均值函数
         var len = array.length;
         var sum = 0;
         for (var i = 0; i < len; i++) {
@@ -670,6 +652,8 @@ export default {
           itemCount: getItemCount(),
           itemSizeGetter: (index) => getSize(index),
           estimatedItemSize: getEstimatedItemSize(),
+          elSizes,
+          totalSize
         });
 
       return sizeAndPosManager;
@@ -684,7 +668,8 @@ export default {
     };
 
     const getCurrSizeVal = () => {
-      return rootNodeSize[getCurrSizeProp()] || props[getCurrSizeProp()];
+      let currSizeProp = getCurrSizeProp()
+      return getNodeOffset || props[currSizeProp];
     };
 
     const getCurrScrollProp = () => {
@@ -706,15 +691,27 @@ export default {
       });
     };
 
-    const getSize = (index: number): number => {
+    const getSize = (index: number): SizeAndPosition => {
       if (typeof itemSize.value === "function") {
         return itemSize.value(index);
       }
       let size = elSizes[index] ? elSizes[index].height : averageSize
-      if (size) {
-        return size
+
+      let offset = 0
+      for (let i = 0; i < index; i++) {
+        offset += elSizes[i] ? elSizes[i].height : averageSize
       }
-      return util.isArray(itemSize.value) ? itemSize.value[index] : itemSize.value;
+
+      if (size) {
+        return {
+          size: size,
+          offset,
+        }
+      }
+      return {
+          size: util.isArray(itemSize.value) ? itemSize.value[index] : itemSize.value,
+          offset: 0,
+        } 
     };
 
     const getItemCount = (): number => {
@@ -725,8 +722,8 @@ export default {
     };
 
     const recomputeSizes = (startIndex: number = 0) => {
-      styleCache = {};
-      sizeAndPosManager?.resetItem(startIndex);
+      // styleCache = {};
+      // sizeAndPosManager?.resetItem(startIndex);
     };
 
     const addUnit = (val: any): string => {
@@ -763,25 +760,26 @@ export default {
     // The life cycle
     ////////////////////////////////////////////////////////////////////////////
     onMounted(async () => {
+      const objResizeObserver = new ResizeObserver(()=>{
+        bs && bs?.refresh()
+        totalSize.width = contentNode.value.clientWidth
+        totalSize.height = contentNode.value.clientHeight
+        console.log(contentNode.value.clientHeight,contentNode.value.clientWidth)
+      });
+      totalSize.width = contentNode.value.clientWidth
+      totalSize.height = contentNode.value.clientHeight
+        // 观察文本域元素
+        objResizeObserver.observe(contentNode.value);
+      
       if (props.pullingDown) {
         await props.pullingDown()
       }
-      const objResizeObserver = new ResizeObserver(() => {
-        // bs && bs?.refresh()
-        rootNodeSize.width = rootNode?.value?.clientWidth
-        rootNodeSize.height = rootNode?.value?.clientHeight
-        // console.log('objResizeObserver',contentNode.value.clientHeight, contentNode.value.clientWidth)
-      });
-      rootNodeSize.width = rootNode.value.clientWidth
-      rootNodeSize.height = rootNode.value.clientHeight
-      // 观察文本域元素
-      objResizeObserver.observe(rootNode.value);
-      // let items = [];
-      // let stop = props.data.length >= 10 ? 10 : props.data.length
-      // for (let i = 0; i < stop; i++) {
-      //   items.push(props.data[i]);
-      // }
-      // event.items = items;
+      let items = [];
+      let stop = props.data.length >= 10 ? 10 : props.data.length
+      for (let i = 0; i < stop; i++) {
+        items.push(props.data[i]);
+      }
+      event.items = items;
       nextTick(initAll);
     })
     onBeforeUnmount(() => {
@@ -791,25 +789,22 @@ export default {
       bs && bs.destroy()
     });
 
-    watch(
-      () => props.debug,
-      (newVal, oldVal) => clearStyleCache()
-    );
+    // watch(
+    //   () => props.debug,
+    //   (newVal, oldVal) => clearStyleCache()
+    // );
 
     watch(
       () => props.data,
       (newVal, oldVal) => {
-        console.log('props.data', props.data)
-        if (!props.data.length) {
-          event.items = []
-        }
+        console.log('newVal',newVal.length,getItemCount())
         sizeAndPosManager?.updateConfig({
           itemCount: getItemCount(),
           estimatedItemSize: getEstimatedItemSize(),
         });
         oldOffset = null;
         recomputeSizes();
-        setTimeout(scrollRender, 5);
+        // setTimeout(scrollRender, 0);
       }
     );
 
@@ -842,13 +837,14 @@ export default {
 
       return state.pullUpFinally ? noMoreTxt : moreTxt
     })
+
     return {
       rootNode,
       innerNode,
       contentNode,
       warpStyle,
       innerStyle,
-      endStyle,
+      // endStyle,
       getItemStyle,
       event,
       elSizes,
